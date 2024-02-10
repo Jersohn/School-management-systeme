@@ -15,7 +15,7 @@ $route = Route::current()->getName();
         <a href="index.html">
           <!-- logo for regular state and mobile devices -->
           <div class="d-flex align-items-center justify-content-center">
-           <h3 class="text-primary"><b>I.T.A </b>- </h3>
+            <h3 class="text-primary"><b>I.T.A </b>- </h3>
             @switch(Auth::user()->usertype)
             @case('Student')
             <h3><b> Espace</b> Etudiant</h3>
@@ -111,11 +111,11 @@ $route = Route::current()->getName();
               <i class="ti-more"></i> Historique des paiements
             </a>
           </li>
-<li>
-    <a href="{{ route('report.single.result.get', ['student_id' => Auth::id(), 'class_id' => $class_id]) }}">
-        <i class="ti-more"></i>Resultat d'examen
-    </a>
-</li>
+          <li>
+            <a href="{{ route('report.single.result.get', ['student_id' => Auth::id(), 'class_id' => $class_id]) }}">
+              <i class="ti-more"></i>Resultat d'examen
+            </a>
+          </li>
         </ul>
       </li>
 
@@ -150,7 +150,7 @@ $route = Route::current()->getName();
       @endif
 
       @if(Auth::user()->usertype == 'Admin')
-      
+
       <li class="treeview {{ ($prefix == '/setups')?'active':'' }}">
         <a href="#">
           <i data-feather="credit-card"></i> <span>Gestion des Modules</span>
@@ -164,7 +164,7 @@ $route = Route::current()->getName();
           <li><a href="{{ route('student.group.view') }}"><i class="ti-more"></i>Groupe</a></li>
           <li><a href="{{ route('school.subject.view') }}"><i class="ti-more"></i>Matières</a></li>
           <li><a href="{{ route('school.classroom.view') }}"><i class="ti-more"></i>Salle de Classe</a></li>
-          <li><a href="{{ route('class.schedule.view') }}"><i class="ti-more"></i>Emploi du temps</a></li>
+          <li><a href="{{ route('class.view') }}"><i class="ti-more"></i>Emploi du temps</a></li>
           <li>
             <a href="{{ route('show.AdminCourses')}}">
               <i class="ti-upload"></i> Support de Cours
@@ -181,7 +181,7 @@ $route = Route::current()->getName();
         </ul>
       </li>
 
-     
+
       <li class="treeview {{ ($prefix == '/students')?'active':'' }}">
         <a href="#">
           <i data-feather="hard-drive"></i></i> <span>Gestion des Etudiants</span>
@@ -207,7 +207,7 @@ $route = Route::current()->getName();
 
         </ul>
       </li>
-    
+
       <li class="treeview {{ ($prefix == '/teachers')?'active':'' }}">
         <a href="#">
           <i data-feather="package"></i> <span>Gestion des Enseignants</span>
@@ -224,46 +224,51 @@ $route = Route::current()->getName();
 
         </ul>
       </li>
-    
+
       <li class="treeview {{ ($prefix == '/marks')?'active':'' }}">
-          <a href="#">
-             <i data-feather="edit-2"></i> <span> Gestion des notes</span>
-            <span class="pull-right-container">
-              <i class="fa fa-angle-right pull-right"></i>
-            </span>
-          </a>
-          <ul class="treeview-menu">
-        <li class="{{ ($route == 'marks.entry.add') }}"><a href="{{ route('marks.entry.add') }}"><i class="ti-more"></i>Entrée de note</a></li> 
-      <li class="{{ ($route == 'marks.entry.edit')}}"><a href="{{ route('marks.entry.edit') }}"><i class="ti-more"></i>Modification de note</a></li>
+        <a href="#">
+          <i data-feather="edit-2"></i> <span> Gestion des notes</span>
+          <span class="pull-right-container">
+            <i class="fa fa-angle-right pull-right"></i>
+          </span>
+        </a>
+        <ul class="treeview-menu">
+          <li class="{{ ($route == 'marks.entry.add') }}"><a href="{{ route('marks.entry.add') }}"><i
+                class="ti-more"></i>Entrée de note</a></li>
+          <li class="{{ ($route == 'marks.entry.edit')}}"><a href="{{ route('marks.entry.edit') }}"><i
+                class="ti-more"></i>Modification de note</a></li>
 
-       <li class="{{ ($route == 'marks.entry.grade')}}"><a href="{{ route('marks.entry.grade') }}"><i class="ti-more"></i>Grade de note</a></li> 
+          <li class="{{ ($route == 'marks.entry.grade')}}"><a href="{{ route('marks.entry.grade') }}"><i
+                class="ti-more"></i>Grade de note</a></li>
 
-            
-          </ul>
-        </li>
 
-      
-		  
-       <li class="treeview {{ ($prefix == '/reports')?'active':'' }}">
-          <a href="#">
-            <i data-feather="server"></i> <span> Gestion des Resultat</span>
-            <span class="pull-right-container">
-              <i class="fa fa-angle-right pull-right"></i>
-            </span>
-          </a>
-          <ul class="treeview-menu">
-       
+        </ul>
+      </li>
 
-          <li class="{{ ($route == 'marksheet.generate.view')}}"><a href="{{ route('marksheet.generate.view') }}"><i class="ti-more"></i>Generer bulletin</a></li>
 
-           <li class="{{ ($route == 'student.result.view')}}"><a href="{{ route('student.result.view') }}"><i class="ti-more"></i>Resultat Etudiant </a></li>
 
-          
-        
+      <li class="treeview {{ ($prefix == '/reports')?'active':'' }}">
+        <a href="#">
+          <i data-feather="server"></i> <span> Gestion des Resultat</span>
+          <span class="pull-right-container">
+            <i class="fa fa-angle-right pull-right"></i>
+          </span>
+        </a>
+        <ul class="treeview-menu">
 
-            
-          </ul>
-        </li>
+
+          <li class="{{ ($route == 'marksheet.generate.view')}}"><a href="{{ route('marksheet.generate.view') }}"><i
+                class="ti-more"></i>Generer bulletin</a></li>
+
+          <li class="{{ ($route == 'student.result.view')}}"><a href="{{ route('student.result.view') }}"><i
+                class="ti-more"></i>Resultat Etudiant </a></li>
+
+
+
+
+
+        </ul>
+      </li>
 
 
 

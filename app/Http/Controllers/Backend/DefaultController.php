@@ -19,6 +19,7 @@ use PDF;
 
 use App\Models\AssignSubject;
 use App\Models\AssignTeacher;
+use App\Models\Calendar_schedule;
 use App\Models\StudentMarks;
 use App\Models\ExamType;
 use Illuminate\Support\Facades\Auth;
@@ -52,6 +53,7 @@ class DefaultController extends Controller
 				// Check if the student is assigned to a class
 				$classId = $assignedStudent->class_id;
 
+
 				// Count number of teachers teaching this class
 
 
@@ -62,14 +64,9 @@ class DefaultController extends Controller
 				$assignedTeachers = AssignTeacher::whereRaw('JSON_CONTAINS(class_id, ?)', [$desiredValueJson])->get();
 				$numTeachers = count($assignedTeachers);
 
-
-
-
-
-
-
 				// Get subjects associated with this class
-				$numSubjects = ClassSchedule::where('class_id', $classId)->distinct('subject_id')->count('subject_id');
+				$className = StudentClass::where('id', $classId)->value('name');
+				$numSubjects = Calendar_schedule::where('class', $className)->distinct('subject')->count('subject');
 
 			}
 			$data = [
@@ -134,13 +131,13 @@ class DefaultController extends Controller
 
 		}
 		$notification = [
-    'message' => 'Bienvenue sur votre back office',
-    'alert-type' => 'success',
-      ];
+			'message' => 'Bienvenue sur votre back office',
+			'alert-type' => 'success',
+		];
 
-return view('admin.index', $data)->with('notification', $notification);
+		return view('admin.index', $data)->with('notification', $notification);
 
-}
+	}
 
 	public function ShowStdentInClass($student_id)
 	{
@@ -172,7 +169,8 @@ return view('admin.index', $data)->with('notification', $notification);
 	{
 		$assignedStudent = AssignStudent::where('student_id', $student_id)->first();
 		$classId = $assignedStudent->class_id;
-		$subjectList = ClassSchedule::where('class_id', $classId)->get();
+		$className = StudentClass::where('id', $classId)->value('name');
+		$subjectList = Calendar_schedule::where('class', $className)->get();
 
 
 		return view('backend.student.student_reg.show_Students_Subject', ['subjectList' => $subjectList]);

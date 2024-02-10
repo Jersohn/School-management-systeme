@@ -1,166 +1,113 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 
 <head>
-    <style>
-      #customers {
-      font-family: Arial, Helvetica, sans-serif;
-      border-collapse: collapse;
-      width: 100%;
-    }
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Class schedule</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css" />
 
-    #customers td,
-    #customers th {
-      border: 1px solid #ddd;
-      padding: 8px;
-    }
 
-    #customers tr:nth-child(even) {
-      background-color: #f2f2f2;
-    }
-
-    #customers tr:hover {
-      background-color: #ddd;
-    }
-
-    #customers th {
-      padding-top: 12px;
-      padding-bottom: 12px;
-      text-align: left;
-      background-color: #4CAF50;
-      color: white;
-    }
-
-    .header {
-      background-color: #4CAF50;
-      color: white;
-      text-align: center;
-      padding: 20px;
-    }
-
-    .school-info {
-      display: flex;
-      justify-content: space-between;
-      padding: 20px;
-      background-color: #fff;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      margin: 20px;
-    }
-
-    .school-info h2 {
-      margin: 0;
-    }
-
-    .school-info p {
-      margin: 5px 0;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 20px;
-      background-color: #fff;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-
-    th,
-    td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
-    }
-
-    th {
-      background-color: #4CAF50;
-      color: white;
-    }
-
-    tr:nth-child(even) {
-      background-color: #f2f2f2;
-    }
-
-    tr:hover {
-      background-color: #ddd;
-    }
-
-    .print-date {
-      font-size: 10px;
-      float: right;
-      margin-bottom: 20px;
-    }
-
-    hr {
-      border: dashed 2px;
-      width: 95%;
-      color: #000;
-      margin-bottom: 20px;
-    }
-    
-    </style>
 </head>
 
-<body>
+<body class="bg-light">
 
 
-     <div class="header">
-    <h2>I.T.A</h2>
-  </div>
 
-  <div class="school-info">
-    <div>
-      <h2 style="text-align: center;">Institut de Technologie Abidjan</h2>
-      <p style="text-align: center;">Abidjan-Macory (Côte d'ivoire)</p>
-      <p style="text-align: center;">Contact: 343434343434</p>
-      <p style="text-align: center;">Email: info.ita@school.com</p>
+
+  <div class="content-wrapper">
+    <div class="container">
+      <!-- Content Header (Page header) -->
+      <br>
+
+      <h1 class="text-center text-info">Emploi du Temps - {{ $className}}</h1>
+
+
+      <a href="{{ route('dashboard') }}" class="btn btn-rounded btn-info mb-5">
+        Retour
+      </a>
+
+
+      <!-- Main content -->
+      <section class="content">
+        <div class="row">
+
+          <div id="calendar"></div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </section>
+      <!-- /.content -->
 
     </div>
-
-
   </div>
 
-    <div>
-        <h2 style="color:#4CAF50;text-align: center;">Emploi du temps {{$className}} | {{ date("Y") }} 
-        </h2>
-    </div>
 
-    
-    <hr>
-    <table border="1" cellpadding="5" cellspacing="0">
-        <thead>
-            <tr>
-                <th></th> <!-- Cellule vide pour l'angle supérieur gauche -->
-                @for ($hour = 7; $hour <= 17; $hour++) <th>{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00</th>
-                    @endfor
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'] as $day)
-            <tr>
-                <td>{{ $day }}</td>
-                @for ($hour = 7; $hour <= 17; $hour++) <td>
-                    <!-- Affichage des cours pour chaque heure -->
-                    @php
-                    $currentHour = sprintf("%02d", $hour) . ":00:00";
-                    $currentHourSchedules = $studentSchedule->where('day_of_week', $day)
-                    ->where('start_time', '<=', $currentHour) ->where('end_time', '>', $currentHour);
-                        @endphp
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment-with-locales.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js"></script>
+  <script>
 
-                        <!-- Vérification des cours pour cette heure -->
-                        @foreach ($currentHourSchedules as $schedule)
-                        <p style="color: cornflowerblue;">{{ $schedule->subject->name }}</p>
-                        <small style="font-style: italic;">{{ $schedule->teacher->name }}</small><br>
-                        <small style="font-weight: bold;">{{ $schedule->classroom->name }}</small><br>
-                        @endforeach
-                        </td>
-                        @endfor
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Récupérer les données via AJAX
+      $.ajax({
+        url: "{{ route('student.schedule.view') }}", // Route vers la méthode du contrôleur
+        type: "GET",
+        success: function (response) {
+          // Initialiser le calendrier FullCalendar avec les données reçues
+          $('#calendar').fullCalendar({
+
+            header: {
+              left: 'prev,next',
+              center: 'title',
+              right: 'today'
+            },
+            defaultView: 'agendaWeek',
+
+            dayNames: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
+            dayNamesShort: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
+            monthNames: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'],
+            monthNamesShort: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
+            buttonText: {
+              today: 'Aujourd\'hui',
+              month: 'Mois',
+              week: 'Semaine',
+              day: 'Jour'
+            },
+            minTime: '07:00:00',
+
+            events: response,
+            eventRender: function (event, element, view) {
+              // Personnaliser l'affichage des événements
+              element.find('.fc-content').html(
+                '<div class="event-details">' +
+                '<div class="detail"><span class="teacher-name">' + event.subject + '</span></div>' +
+                '<div class="detail"><em>' + event.teacher + '</em></div>' +
+                '<div class="detail"><strong>' + event.classroom + '</strong></div>' +
+
+                '<div class="detail"><span class="event-time">De ' + event.start.format('HH:mm') + ' à ' + event.end.format('HH:mm') + '</span></div>' +
+                '</div>'
+              );
+            },
+            // Autres options du calendrier...
+          });
+        },
+        error: function (xhr, status, error) {
+          console.error(xhr.responseText);
+          alert("Error loading student schedule. Please try again.");
+        }
+      });
+    });
+
+  </script>
 
 
-    <br> <br>
-    <i style="font-size: 10px; float: right;">Print Data : {{ date("d M Y") }}</i>
+
+
+
+
 
 </body>
 

@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\Backend\Setup\ClassroomController;
+use App\Http\Controllers\Backend\Setup\FullCalendarController;
 use App\Http\Controllers\Backend\Teacher\TeacherSalaryController;
 use App\Models\AssignStudent;
 use Illuminate\Support\Facades\Auth;
@@ -74,7 +75,7 @@ Route::group(['middleware' => 'prevent-back-history'], function () {
     });
 
     Route::middleware(['auth:sanctum', 'verified'])->get('/dashboard', [DefaultController::class, 'index'])->name('dashboard');
-// Route::get('login', [AuthController::class,'authenticate'])->name('login');
+    // Route::get('login', [AuthController::class,'authenticate'])->name('login');
 
 
 
@@ -219,18 +220,13 @@ Route::group(['middleware' => 'prevent-back-history'], function () {
 
 
             //Class Schedule All Routes
-            Route::get('class/schedule/view', [ClassScheduleController::class, 'ViewSchedule'])->name('class.schedule.view');
+            Route::get('classes-list', [FullCalendarController::class, 'getClass'])->name('class.view');
+            Route::get('class/schedule/{classId}', [FullCalendarController::class, 'index'])
+                ->name('class.calendar.view')
+            ;
 
-
-
-            Route::get('class/schedule/add', [ClassScheduleController::class, 'AddSchedule'])->name('class.schedule.add');
-
-
-            Route::post('class/schedule/store', [ClassScheduleController::class, 'StoreSchedule'])->name('class.schedule.store');
-            Route::get('class/schedule/edit/{schedule_id}', [ClassScheduleController::class, 'EditSchedule'])->name('class.schedule.edit');
-            Route::post('class/schedule/update/{schedule_id}', [ClassScheduleController::class, 'UpdateSchedule'])->name('class.schedule.update');
-            Route::get('class/schedule/delete/{schedule_id}', [ClassScheduleController::class, 'DeleteSchedule'])->name('class.schedule.delete');
-            Route::get('class/schedule/pdf/{class_id}', [ClassScheduleController::class, 'GeneratePDF'])->name('class.schedule.pdf');
+            Route::get('get/subjects', [FullCalendarController::class, 'getSubjectsByTeacher'])->name('get.subjects');
+            Route::post('schedule/action', [FullCalendarController::class, 'action'])->name('class.calendar.store');
             Route::get('courses/view/all', [CoursesController::class, 'ShowAdminCourse'])->name('show.AdminCourses');
             Route::get('display/course/{course_id}', [CoursesController::class, 'DisplayAdminCourse'])->name('display.AdminCourse');
 
@@ -287,10 +283,10 @@ Route::group(['middleware' => 'prevent-back-history'], function () {
             Route::get('/reg/delete/{student_id}', [StudentRegController::class, 'StudentRegDelete'])->name('student.registration.delete');
 
 
-            Route::get('/students/schedule/view', [ClassScheduleController::class, 'viewStudentSchedule'])->name('student.schedule.view');
-            Route::get('/students/schedule/view/{student_id}', [ClassScheduleController::class, 'viewSpecificStudentSchedule'])->name('specific.student.schedule.view');
+            Route::get('/schedule/view', [FullCalendarController::class, 'viewStudentSchedule'])->name('student.schedule.view');
+            Route::get('/schedule/view/{student_id}', [FullCalendarController::class, 'viewSpecificStudentSchedule'])->name('specific.student.schedule.view');
 
-            Route::get('/students/course/view/{student_id}', [CoursesController::class, 'ShowStudentCourse'])->name('show.studentCourses');
+            Route::get('/course/view/{student_id}', [CoursesController::class, 'ShowStudentCourse'])->name('show.studentCourses');
             Route::get('/display/course/{course_id}', [CoursesController::class, 'DisplayStudentCourse'])->name('display.studentCourse');
             Route::get('result/get/{student_id}/{class_id}', [ResultReportController::class, 'StudentResultGet'])->name('report.single.result.get');
             Route::get('result/view', [ResultReportController::class, 'StudentResultView'])->name('single.student.result.view');
@@ -355,8 +351,8 @@ Route::group(['middleware' => 'prevent-back-history'], function () {
             Route::get('/salary/details/{id}', [TeacherSalaryController::class, 'SalaryDetails'])->name('teacher.salary.details');
             //Teacher Schedule Routes
 
-            Route::get('/teachers/schedule/view', [ClassScheduleController::class, 'viewTeacherSchedule'])->name('teacher.schedule.view');
-            Route::get('/teachers/schedule/view/{teacher_id}', [ClassScheduleController::class, 'viewSpecificTeacherSchedule'])->name('specific.teacher.schedule.view');
+            Route::get('/teachers/schedule/view', [FullCalendarController::class, 'viewTeacherSchedule'])->name('teacher.schedule.view');
+            Route::get('/teachers/schedule/view/{teacher_id}', [FullCalendarController::class, 'viewSpecificTeacherSchedule'])->name('specific.teacher.schedule.view');
 
             // Teacher courses Routes
             Route::get('/show/courses', [CoursesController::class, 'ShowCourses'])->name('show.courses');
@@ -372,52 +368,52 @@ Route::group(['middleware' => 'prevent-back-history'], function () {
         });
 
         /// Marks Management Routes  
-Route::prefix('marks')->group(function(){
+        Route::prefix('marks')->group(function () {
 
-Route::get('marks/entry/add', [MarksController::class, 'MarksAdd'])->name('marks.entry.add');
+            Route::get('marks/entry/add', [MarksController::class, 'MarksAdd'])->name('marks.entry.add');
 
-Route::post('marks/entry/store', [MarksController::class, 'MarksStore'])->name('marks.entry.store'); 
+            Route::post('marks/entry/store', [MarksController::class, 'MarksStore'])->name('marks.entry.store');
 
-Route::get('marks/entry/edit', [MarksController::class, 'MarksEdit'])->name('marks.entry.edit'); 
+            Route::get('marks/entry/edit', [MarksController::class, 'MarksEdit'])->name('marks.entry.edit');
 
-Route::get('marks/getstudents/edit', [MarksController::class, 'MarksEditGetStudents'])->name('student.edit.getstudents');
+            Route::get('marks/getstudents/edit', [MarksController::class, 'MarksEditGetStudents'])->name('student.edit.getstudents');
 
-Route::post('marks/entry/update', [MarksController::class, 'MarksUpdate'])->name('marks.entry.update'); 
-// MarkSheet Generate Routes 
-Route::get('marksheet/generate/view', [MarkSheetController::class, 'MarkSheetView'])->name('marksheet.generate.view');
+            Route::post('marks/entry/update', [MarksController::class, 'MarksUpdate'])->name('marks.entry.update');
+            // MarkSheet Generate Routes 
+            Route::get('marksheet/generate/view', [MarkSheetController::class, 'MarkSheetView'])->name('marksheet.generate.view');
 
-Route::get('marksheet/generate/get', [MarkSheetController::class, 'MarkSheetGet'])->name('report.marksheet.get'); 
+            Route::get('marksheet/generate/get', [MarkSheetController::class, 'MarkSheetGet'])->name('report.marksheet.get');
 
-// Marks Entry Grade 
+            // Marks Entry Grade 
 
-Route::get('marks/grade/view', [GradeController::class, 'MarksGradeView'])->name('marks.entry.grade');
+            Route::get('marks/grade/view', [GradeController::class, 'MarksGradeView'])->name('marks.entry.grade');
 
-Route::get('marks/grade/add', [GradeController::class, 'MarksGradeAdd'])->name('marks.grade.add');
+            Route::get('marks/grade/add', [GradeController::class, 'MarksGradeAdd'])->name('marks.grade.add');
 
-Route::post('marks/grade/store', [GradeController::class, 'MarksGradeStore'])->name('store.marks.grade');
+            Route::post('marks/grade/store', [GradeController::class, 'MarksGradeStore'])->name('store.marks.grade');
 
-Route::get('marks/grade/edit/{id}', [GradeController::class, 'MarksGradeEdit'])->name('marks.grade.edit');
+            Route::get('marks/grade/edit/{id}', [GradeController::class, 'MarksGradeEdit'])->name('marks.grade.edit');
 
-Route::post('marks/grade/update/{id}', [GradeController::class, 'MarksGradeUpdate'])->name('update.marks.grade');
+            Route::post('marks/grade/update/{id}', [GradeController::class, 'MarksGradeUpdate'])->name('update.marks.grade');
 
-// Student Result Report Routes 
-Route::get('allstudent/result/view', [ResultReportController::class, 'ResultView'])->name('student.result.view');
-
-
-Route::get('allstudent/result/get', [ResultReportController::class, 'ResultGet'])->name('report.student.result.get');
+            // Student Result Report Routes 
+            Route::get('allstudent/result/view', [ResultReportController::class, 'ResultView'])->name('student.result.view');
 
 
-}); 
- 
-
-Route::get('marks/getsubject', [DefaultController::class, 'GetSubject'])->name('marks.getsubject');
-
-Route::get('student/marks/getstudents', [DefaultController::class, 'GetStudents'])->name('student.marks.getstudents');
+            Route::get('allstudent/result/get', [ResultReportController::class, 'ResultGet'])->name('report.student.result.get');
 
 
+        });
 
 
-        
-    }); 
+        Route::get('marks/getsubject', [DefaultController::class, 'GetSubject'])->name('marks.getsubject');
 
-}); 
+        Route::get('student/marks/getstudents', [DefaultController::class, 'GetStudents'])->name('student.marks.getstudents');
+
+
+
+
+
+    });
+
+});
