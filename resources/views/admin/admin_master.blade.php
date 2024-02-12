@@ -24,7 +24,7 @@
 
 </head>
 
-<body class="hold-transition dark-skin sidebar-mini theme-primary fixed">
+<body class="hold-transition dark-skin sidebar-mini theme-warning fixed">
 
   <div class="wrapper">
 
@@ -45,6 +45,7 @@
 
 
   <!-- Vendor JS -->
+
   <script src="{{ asset('backend/js/vendors.min.js') }}"></script>
   <script src="{{ asset('../assets/icons/feather-icons/feather.min.js') }}"></script>
   <script src="{{ asset('../assets/vendor_components/easypiechart/dist/jquery.easypiechart.js') }}"></script>
@@ -62,6 +63,7 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+
 
   <script type="text/javascript">
     $(function () {

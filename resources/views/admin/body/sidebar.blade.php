@@ -165,6 +165,8 @@ $route = Route::current()->getName();
           <li><a href="{{ route('school.subject.view') }}"><i class="ti-more"></i>Matières</a></li>
           <li><a href="{{ route('school.classroom.view') }}"><i class="ti-more"></i>Salle de Classe</a></li>
           <li><a href="{{ route('class.view') }}"><i class="ti-more"></i>Emploi du temps</a></li>
+          <li><a href="{{ route('planning.show') }}"><i class="ti-more"></i>Planification</a></li>
+          <li><a href="{{ route('module.show') }}"><i class="ti-more"></i>Modules</a></li>
           <li>
             <a href="{{ route('show.AdminCourses')}}">
               <i class="ti-upload"></i> Support de Cours

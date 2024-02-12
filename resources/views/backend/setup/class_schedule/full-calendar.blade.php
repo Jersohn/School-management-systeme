@@ -8,7 +8,31 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css" />
 
+    <style>
+        /* Styles for the sidebar */
+        .sidebar {
+            width: 100%;
+            height: 100%;
+            background-color: #f0f0f0;
+            float: left;
+            padding: 20px;
+        }
 
+        /* Styles for the modules */
+        .module {
+            background-color: #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        /* Styles for FullCalendar */
+        #calendar {
+            width: 100%;
+            height: 600px;
+            float: right;
+        }
+    </style>
 </head>
 
 <body class="bg-light">
@@ -21,96 +45,137 @@
             <!-- Content Header (Page header) -->
             <br>
 
-            <h1 class="text-center text-info">Emploi du Temps - {{ $selectedClass}}</h1>
-            <a href="#" type="button" class="btn btn-rounded btn-outline-info mb-5" id="addEventBtn">Ajouter un emploi
-                du temps
-            </a>
+            <h1 class="text-center text-info">Emploi du Temps - {{ $selectedClass}}</h1><br><br>
 
-            <a href="{{ route('class.view') }}" style="float: right;" class="btn btn-rounded btn-info mb-5">
-                Retour
-            </a>
+
 
 
             <!-- Main content -->
             <section class="content">
-                <div class="row">
-
-                    <div id="calendar"></div>
-
-                    <div class="modal" id="eventModal" tabindex="-1" role="dialog">
-                        <div class="modal-dialog modal-dialog-centered" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="eventModalLabel">Ajout Emploi du Temps</h5>
-                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="sidebar" id="sidebar">
+                                <div class="text-warning text-center">Matières
                                 </div>
-                                <div class="modal-body">
-                                    <form id="eventForm">
-                                        <div class="form-group">
-                                            <label for="class_id">Classe</label>
-                                            <input type="text" name="class_id" id="classSelected" class="form-control"
-                                                value="{{ $selectedClass}}" readonly>
-                                        </div>
+                                <a href="{{route('module.add')}}" type="button"
+                                    class="btn btn-rounded btn-outline-info mb-5" id="addEventBtn"><i
+                                        class="fa fa-plus"></i>Ajouter un
+                                    emploi du temps</a>
 
-                                        <div class="form-group">
-                                            <label for="teacher_id">Enseignant</label>
-                                            <select name="teacher_id" id="teacherSelected" class="form-control">
-                                                <option value="">Selectionnez un Enseignant</option>
-                                                @foreach($teachers as $teacher)
-                                                <option value="{{ $teacher->id }}">{{ $teacher->name }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
+                                @php
+                                use App\Models\Assign_module;
 
-                                        <div class="form-group">
-                                            <label for="subject_id">Matière</label>
-                                            <select name="subject_id" id="subjectSelected" class="form-control">
-                                                <option value="">Sélectionnez une Matière</option>
-                                                <!-- Options des matières seront ajoutées ici via JavaScript -->
-                                            </select>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="start_time">Debut</label>
-                                            <input type="datetime-local" name="start_time" id="startDateTime"
-                                                class="form-control">
-                                        </div>
+                                // Récupérer tous les modules
+                                $modules = Assign_module::all();
 
-                                        <div class="form-group">
-                                            <label for="end_time">Fin</label>
-                                            <input type="datetime-local" name="end_time" id="endDateTime"
-                                                class="form-control">
-                                        </div>
+                                // Utiliser la méthode unique pour obtenir des objets uniques en fonction de la clé
 
-                                        <div class="form-group">
-                                            <label for="classroom_id">Salle</label>
-                                            <select name="classroom_id" id="classroomSelected" class="form-control">
-                                                <option value="">Selectionnez une salle</option>
-                                                @foreach($classrooms as $classroom)
-                                                <option value="{{ $classroom->name }}">{{ $classroom->name }}</option>
-                                                @endforeach
-                                            </select>
+                                $uniqueModules = $modules->unique('subject_id');
+
+                                @endphp
+
+                                @foreach($uniqueModules as $module)
+                                @php
+                                // Récupérer le premier enregistrement pour chaque module unique
+                                $moduleData = $modules->where('subject_id', $module->subject_id)->first();
+                                @endphp
+                                <div class="module" id="module{{ $moduleData->id }}" draggable="true"
+                                    ondragstart="drag(event)"
+                                    style="background-color: {{ $moduleData->color }}; padding: 10px; margin-bottom: 10px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            <strong>{{ $moduleData->subject->name }}</strong>
                                         </div>
-                                    </form>
+                                        <div>
+                                            {{ $moduleData->hours_per_year }}h
+                                        </div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        {{ $moduleData->teacher->name }}
+                                    </div>
                                 </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-primary" id="saveEventBtn">Save Event</button>
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                @endforeach
+
+                                <a href="{{ route('class.view') }}" class="btn btn-rounded btn-outline-info mb-5">
+                                    Retour
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div id="calendar"></div>
+                        </div>
+                        <div class="modal" id="eventModal" tabindex="-1" role="dialog">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="eventModalLabel">Ajout Emploi du Temps</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form id="eventForm">
+                                            <div class="form-group">
+                                                <label for="class_id">Classe</label>
+                                                <input type="text" name="class_id" id="classSelected"
+                                                    class="form-control" value="{{ $selectedClass}}" readonly>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label for="teacher_id">Enseignant</label>
+                                                <select name="teacher_id" id="teacherSelected" class="form-control">
+                                                    <option value="">Selectionnez un Enseignant</option>
+                                                    @foreach($teachers as $teacher)
+                                                    <option value="{{ $teacher->id }}">{{ $teacher->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label for="subject_id">Matière</label>
+                                                <select name="subject_id" id="subjectSelected" class="form-control">
+                                                    <option value="">Sélectionnez une Matière</option>
+                                                    <!-- Options des matières seront ajoutées ici via JavaScript -->
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="start_time">Debut</label>
+                                                <input type="datetime-local" name="start_time" id="startDateTime"
+                                                    class="form-control">
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label for="end_time">Fin</label>
+                                                <input type="datetime-local" name="end_time" id="endDateTime"
+                                                    class="form-control">
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label for="classroom_id">Salle</label>
+                                                <select name="classroom_id" id="classroomSelected" class="form-control">
+                                                    <option value="">Selectionnez une salle</option>
+                                                    @foreach($classrooms as $classroom)
+                                                    <option value="{{ $classroom->name }}">{{ $classroom->name }}
+                                                    </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-primary" id="saveEventBtn">Save
+                                            Event</button>
+                                        <button type="button" class="btn btn-secondary"
+                                            data-dismiss="modal">Close</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <!-- Modal de détails et suppression -->
-
-
-
-
-                    <!-- /.col -->
                 </div>
-                <!-- /.row -->
             </section>
-            <!-- /.content -->
+
 
         </div>
     </div>

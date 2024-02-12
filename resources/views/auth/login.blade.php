@@ -33,9 +33,9 @@
                 <div class="col-md-6 offset-md-3">
                   <div class="content-top-agile p-10">
 
-                    <div class="float-right ">
-                      <h2 class="text-white">Institut Nationale des Sciences Economiques et Technologiques</h2>
-                    </div>
+
+                    <h2 class="text-white"><i class="text-warning mr-0 font-size-24 mdi mdi-school"></i> I N S E T</h2>
+
                     <div class="clearfix"></div> <!-- Clear the floats -->
 
                     <hr style="border-color:darkgoldenrod;">

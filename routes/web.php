@@ -8,6 +8,7 @@ use App\Models\AssignStudent;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AssignModuleController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Backend\UserController;
 use App\Http\Controllers\Backend\ProfileController;
@@ -50,8 +51,10 @@ use App\Http\Controllers\Backend\Report\MarkSheetController;
 use App\Http\Controllers\Backend\Report\AttenReportController;
 use App\Http\Controllers\Backend\Report\ResultReportController;
 use App\Http\Controllers\Backend\Setup\ClassScheduleController;
+use App\Http\Controllers\Backend\Setup\PlanningController;
 use App\Http\Controllers\Backend\Teacher\CoursesController;
 use App\Models\Classroom;
+use App\Models\Planning;
 use App\Models\User;
 
 /*
@@ -214,7 +217,21 @@ Route::group(['middleware' => 'prevent-back-history'], function () {
 
             Route::get('school/subject/delete/{id}', [SchoolSubjectController::class, 'SubjectDelete'])->name('school.subject.delete');
 
+            //module routes
+            Route::get('module/show', [AssignModuleController::class, 'showModule'])->name('module.show');
+            Route::get('module/add', [AssignModuleController::class, 'createModule'])->name('module.add');
+            Route::post('module/store', [AssignModuleController::class, 'storeModule'])->name('module.store');
+            Route::get('module/edit/{class_id}', [AssignModuleController::class, 'editModule'])->name('module.edit');
+            Route::post('module/update/{class_id}', [AssignModuleController::class, 'updateModule'])->name('module.update');
+            Route::get('module/delete/{class_id}', [AssignModuleController::class, 'deleteModule'])->name('module.delete');
 
+
+            //planning routes
+            Route::get('hour/planning/show', [PlanningController::class, 'showPlanning'])->name('planning.show');
+            Route::get('hour/planning/add', [PlanningController::class, 'createPlanning'])->name('planning.add');
+            Route::post('hour/planning/store', [PlanningController::class, 'storePlanning'])->name('planning.store');
+            Route::get('hour/planning/edit/{class_id}', [PlanningController::class, 'editPlanning'])->name('planning.edit');
+            Route::post('hour/planning/update/{class_id}', [PlanningController::class, 'updatePlanning'])->name('planning.update');
 
 
 

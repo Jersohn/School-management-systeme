@@ -29,7 +29,8 @@
                 <div class="row justify-content-center no-gutters">
                     <div class="col-lg-4 col-md-5 col-12">
                         <div class="content-top-agile p-10">
-                            <h2 class="text-white"><i class="text-warning mr-0 font-size-24 mdi mdi-school"></i> Institut de Technologie d'Abidjan</h2>
+                            <h2 class="text-white"><i class="text-warning mr-0 font-size-24 mdi mdi-school"></i> I N S E
+                                T</h2>
                             <hr style="border-color: aliceblue;">
                             <p class="text-white-50">Veillez vous inscrire pour commencer</p>
                         </div>
