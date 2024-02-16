@@ -2,14 +2,30 @@
 <html lang="fr">
 
 <head>
+
     <meta name="csrf-token" content="{{ csrf_token() }}" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Class schedule</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css" />
+
 
     <style>
         /* Styles for the sidebar */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica Neue, Helvetica, sans-serif;
+            font-size: 14px;
+        }
+
+
+        #external-events .fc-event {
+            cursor: move;
+            margin: 3px 0;
+        }
+
+
+
         .sidebar {
             width: 100%;
             height: 100%;
@@ -33,6 +49,7 @@
             float: right;
         }
     </style>
+
 </head>
 
 <body class="bg-light">
@@ -41,7 +58,7 @@
 
 
     <div class="content-wrapper">
-        <div class="container">
+        <div class="container-fluid">
             <!-- Content Header (Page header) -->
             <br>
 
@@ -51,129 +68,192 @@
 
 
             <!-- Main content -->
-            <section class="content">
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="sidebar" id="sidebar">
-                                <div class="text-warning text-center">Matières
-                                </div>
-                                <a href="{{route('module.add')}}" type="button"
-                                    class="btn btn-rounded btn-outline-info mb-5" id="addEventBtn"><i
-                                        class="fa fa-plus"></i>Ajouter un
-                                    emploi du temps</a>
+            <section>
 
-                                @php
-                                use App\Models\Assign_module;
+                <div class="row">
+                    <div class="col-md-3" id='external-events'>
+                        <div class="sidebar" id="sidebar">
+                            <div class="text-dark text-center">
+                                <h3>MODULES</h3>
+                            </div>
+                            <hr>
+                            <a href="#" type="button" class="btn btn-rounded btn-outline-info mb-5" id="addEventBtn"><i
+                                    class="fa fa-plus"></i>Ajouter un
+                                module</a>
 
-                                // Récupérer tous les modules
-                                $modules = Assign_module::all();
+                            @php
+                            use App\Models\Assign_module;
+                            use App\Models\StudentClass;
 
-                                // Utiliser la méthode unique pour obtenir des objets uniques en fonction de la clé
+                            // Récupérer tous les modules et classes
 
-                                $uniqueModules = $modules->unique('subject_id');
+                            $class = $selectedClass;
+                            $class_id = StudentClass::where('name',$class)->value('id');
+                            $modules = Assign_module::where('class_id',$class_id)->get();
 
-                                @endphp
+                            @endphp
 
-                                @foreach($uniqueModules as $module)
-                                @php
-                                // Récupérer le premier enregistrement pour chaque module unique
-                                $moduleData = $modules->where('subject_id', $module->subject_id)->first();
-                                @endphp
-                                <div class="module" id="module{{ $moduleData->id }}" draggable="true"
-                                    ondragstart="drag(event)"
-                                    style="background-color: {{ $moduleData->color }}; padding: 10px; margin-bottom: 10px;">
+                            @foreach($modules as $moduleData)
+                            @php
+                            $hoursPerWeek = round($moduleData->hours_per_year / 52, 2);
+                            $hours = floor($hoursPerWeek); // Nombre d'heures entières
+                            $minutes = round(($hoursPerWeek - $hours) * 60);
+                            @endphp
+
+                            <div class="module fc-event fc-h-event fc-daygrid-event fc-daygrid-block-event"
+                                id="module{{ $moduleData->id }}" style="background-color: {{ $moduleData->color }}; padding: 10px; margin-bottom: 10px;
+                            border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" data-toggle="tooltip"
+                                title="{{ $moduleData->hours_per_year }}h/an | {{ $hours }}h{{ $minutes }}min/semaine "
+                                data-event='{ "subject": "{{ $moduleData->subject->name }}", "teacher": "{{ $moduleData->teacher->name }}", "classroom":"{{ $moduleData->classroom->name }}","color":"{{ $moduleData->color }}" }'>
+                                <div class="fc-event-main">
                                     <div style="display: flex; justify-content: space-between; align-items: center;">
                                         <div>
                                             <strong>{{ $moduleData->subject->name }}</strong>
                                         </div>
                                         <div>
-                                            {{ $moduleData->hours_per_year }}h
+
+                                            {{ $moduleData->teacher->name }}
+
+                                            <br>
+
+                                            <small>{{ $moduleData->classroom->name }}</small>
                                         </div>
                                     </div>
-                                    <div style="text-align: center;">
-                                        {{ $moduleData->teacher->name }}
-                                    </div>
-                                </div>
-                                @endforeach
 
-                                <a href="{{ route('class.view') }}" class="btn btn-rounded btn-outline-info mb-5">
-                                    Retour
-                                </a>
+                                </div>
+                            </div>
+
+                            @endforeach
+
+                            <a href="{{ route('class.view') }}" class="btn btn-rounded btn-outline-info mb-5">
+                                Retour
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="col-md-9" id='calendar-container'>
+                        <div id='calendar'></div>
+                    </div>
+
+                    <div class="modal" id="eventModal" tabindex="-1" role="dialog">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="eventModalLabel">Ajout Emploi du Temps</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <form id="eventForm" action="{{ route('module.store') }}" method="POST">
+                                        @csrf
+                                        <div class="form-group">
+                                            <label for="class_id">Classe :{{ $selectedClass}}</label>
+                                            <input type="hidden" name="class_id" id="classSelected" class="form-control"
+                                                value="{{ $selectedClassId}}">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="teacher_id">Enseignant</label>
+                                            <select name="teacher_id" id="teacherSelected" class="form-control">
+                                                <option value="">Selectionnez un Enseignant</option>
+                                                @foreach($teachers as $teacher)
+                                                <option value="{{ $teacher->id }}">{{ $teacher->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="subject_id">Matière</label>
+                                            <select name="subject_id" id="subjectSelected" class="form-control">
+                                                <option value="">Sélectionnez une Matière</option>
+                                                <!-- Options des matières seront ajoutées ici via JavaScript -->
+                                            </select>
+                                        </div>
+
+
+                                        <div class="form-group">
+                                            <label for="classroom_id">Salle</label>
+                                            <select name="classroom_id" id="classroomSelected" class="form-control">
+                                                <option value="">Selectionnez une salle</option>
+                                                @foreach($classrooms as $classroom)
+                                                <option value="{{ $classroom->id }}">{{ $classroom->name }}
+                                                </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="submit" class="btn btn-primary">Save
+                                                Event</button>
+                                            <button type="button" class="btn btn-secondary"
+                                                data-dismiss="modal">Close</button>
+                                        </div>
+                                    </form>
+                                </div>
+
                             </div>
                         </div>
-                        <div class="col-md-9">
-                            <div id="calendar"></div>
-                        </div>
-                        <div class="modal" id="eventModal" tabindex="-1" role="dialog">
-                            <div class="modal-dialog modal-dialog-centered" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="eventModalLabel">Ajout Emploi du Temps</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <form id="eventForm">
-                                            <div class="form-group">
-                                                <label for="class_id">Classe</label>
-                                                <input type="text" name="class_id" id="classSelected"
-                                                    class="form-control" value="{{ $selectedClass}}" readonly>
-                                            </div>
-
-                                            <div class="form-group">
-                                                <label for="teacher_id">Enseignant</label>
-                                                <select name="teacher_id" id="teacherSelected" class="form-control">
-                                                    <option value="">Selectionnez un Enseignant</option>
-                                                    @foreach($teachers as $teacher)
-                                                    <option value="{{ $teacher->id }}">{{ $teacher->name }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-
-                                            <div class="form-group">
-                                                <label for="subject_id">Matière</label>
-                                                <select name="subject_id" id="subjectSelected" class="form-control">
-                                                    <option value="">Sélectionnez une Matière</option>
-                                                    <!-- Options des matières seront ajoutées ici via JavaScript -->
-                                                </select>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="start_time">Debut</label>
-                                                <input type="datetime-local" name="start_time" id="startDateTime"
-                                                    class="form-control">
-                                            </div>
-
-                                            <div class="form-group">
-                                                <label for="end_time">Fin</label>
-                                                <input type="datetime-local" name="end_time" id="endDateTime"
-                                                    class="form-control">
-                                            </div>
-
-                                            <div class="form-group">
-                                                <label for="classroom_id">Salle</label>
-                                                <select name="classroom_id" id="classroomSelected" class="form-control">
-                                                    <option value="">Selectionnez une salle</option>
-                                                    @foreach($classrooms as $classroom)
-                                                    <option value="{{ $classroom->name }}">{{ $classroom->name }}
-                                                    </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                        </form>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-primary" id="saveEventBtn">Save
-                                            Event</button>
-                                        <button type="button" class="btn btn-secondary"
-                                            data-dismiss="modal">Close</button>
-                                    </div>
+                    </div>
+                    <!-- modal modification -->
+                    <div class="modal" id="modifyEventModal" tabindex="-1" role="dialog">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="eventModalLabel">Modification Emploi du Temps</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
                                 </div>
+                                <div class="modal-body">
+                                    <form id="eventForm" action="{{ route('module.store') }}" method="POST">
+                                        @csrf
+                                        <div class="form-group">
+                                            <label for="oldclass_id">Classe :{{ $selectedClass}}</label>
+                                            <input type="hidden" name="class_id" id="oldclassSelected"
+                                                class="form-control" value="{{ $selectedClassId}}">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="oldteacher_id">Enseignant</label>
+                                            <select name="teacher_id" id="oldTeacher" class="form-control">
+                                                <option value="">Selectionnez un Enseignant</option>
+                                                @foreach($teachers as $teacher)
+                                                <option value="{{ $teacher->id }}">{{ $teacher->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="oldsubject_id">Matière</label>
+                                            <select name="subject_id" id="oldsubjectSelected" class="form-control">
+                                                <option value="">Sélectionnez une Matière</option>
+                                                <!-- Options des matières seront ajoutées ici via JavaScript -->
+                                            </select>
+                                        </div>
+
+
+                                        <div class="form-group">
+                                            <label for="oldclassroom_id">Salle</label>
+                                            <select name="classroom_id" id="oldclassroomSelected" class="form-control">
+                                                <option value="">Selectionnez une salle</option>
+                                                @foreach($classrooms as $classroom)
+                                                <option value="{{ $classroom->id }}">{{ $classroom->name }}
+                                                </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="submit" class="btn btn-info">Modifier</button>
+                                            <button type="button" class="btn btn-danger">Supprimer</button>
+                                        </div>
+                                    </form>
+                                </div>
+
                             </div>
                         </div>
                     </div>
                 </div>
+
             </section>
 
 
@@ -183,9 +263,10 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment-with-locales.min.js"></script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js"></script>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+
+
 
     <script>
 
@@ -203,10 +284,10 @@
                         // Effacer les options existantes du select des matières
                         $("#subjectSelected").empty();
                         // Ajouter les nouvelles options basées sur les matières retournées par la requête AJAX
-                        data.forEach(function (subjectName) {
+                        data.forEach(function (subject) {
                             // Ajouter une option avec le nom de la matière
                             $("#subjectSelected").append(
-                                '<option value="' + subjectName + '">' + subjectName + '</option>'
+                                '<option value="' + subject.id + '">' + subject.name + '</option>'
                             );
                         });
                     },
@@ -227,150 +308,142 @@
 
     </script>
     <script>
-        var scheduleData = @json($schedules);// Convertir les données en JSON
-        var selectedClass = "{{$selectedClass}}"; // Classe actuellement sélectionnée
-
-
 
         $(document).ready(function () {
+            $("#oldTeacher").on("change", function () {
+                var teacherId = $(this).val();
+                // Effectuer une requête AJAX pour récupérer les matières enseignées par le professeur sélectionné
+                $.ajax({
+                    url: "{{ route('get.subjects') }}",
+                    type: "GET",
+                    data: {
+                        teacherSelected: teacherId
+                    },
+                    success: function (data) {
+                        // Effacer les options existantes du select des matières
+                        $("#oldsubjectSelected").empty();
+                        // Ajouter les nouvelles options basées sur les matières retournées par la requête AJAX
+                        data.forEach(function (subject) {
+                            // Ajouter une option avec le nom de la matière
+                            $("#oldsubjectSelected").append(
+                                '<option value="' + subject.id + '">' + subject.name + '</option>'
+                            );
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        console.error(xhr.responseText);
 
-            $.ajaxSetup({
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                }
+                        try {
+                            var errorMessage = JSON.parse(xhr.responseText).error;
+                            alert("Error: " + errorMessage);
+                        } catch (e) {
+                            alert("Error showing subject. Please try again.");
+                        }
+                    }
+                });
+
+            });
+        });
+
+    </script>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var scheduleData = @json($schedules);
+            var selectedClass = "{{$selectedClass}}";
+            var Calendar = FullCalendar.Calendar;
+            var Draggable = FullCalendar.Draggable;
+
+            var containerEl = document.getElementById('sidebar');
+            var calendarEl = document.getElementById('calendar');
+
+            // initialize the external events
+            // -----------------------------------------------------------------
+
+            new Draggable(containerEl, {
+                itemSelector: '.module',
+                eventData: function (eventEl) {
+                    var eventData = JSON.parse(eventEl.getAttribute('data-event'));
+                    var contentHtml =
+                        'Matière: ' + eventData.subject + ', ' +
+                        'Enseignant: ' + eventData.teacher + ', ' +
+                        'Salle: ' + eventData.classroom;
+
+                    return {
+                        title: contentHtml,
+                        color: eventData.color
+
+                    };
+                },
+
+
             });
 
 
-            var calendar = $('#calendar').fullCalendar({
 
+            // initialize the calendar
+            // -----------------------------------------------------------------
 
-                editable: true,
-                header: {
+            var calendar = new Calendar(calendarEl, {
+
+                locale: 'fr',
+                headerToolbar: {
                     left: 'prev,next',
                     center: 'title',
                     right: 'today'
                 },
-                defaultView: 'agendaWeek',
-                views: {
-                    defaultView: {
-                        type: 'agendaWeek',
-                        duration: { weeks: 1 },
-                        buttonText: 'Semaine fixe'
-                    }
-                },
-                dayNames: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
-                dayNamesShort: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
-                monthNames: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'],
-                monthNamesShort: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
                 buttonText: {
-                    today: 'Aujourd\'hui',
-                    month: 'Mois',
-                    week: 'Semaine',
-                    day: 'Jour'
+                    today: 'aujourd\'hui'
                 },
-                minTime: '07:00:00',
+                initialView: 'timeGridWeek',
+                hiddenDays: [0, 7],
+                slotMinTime: "07:00",
+                slotMaxTime: "19:00",
+                editable: true,
+                droppable: true,
                 events: scheduleData,
 
-                selectHelper: true,
-                // select: function (start, end, allDay) {
-                //     $('#eventModal').modal('show');
-                // },
+                drop: function (info) {
 
-                eventRender: function (event, element, view) {
-                    // Ajouter les détails directement à la cellule avec des balises HTML et des styles
-                    element.find('.fc-content').html(
-                        '<div class="event-details">' +
-                        '<div class="detail"><span class="teacher-name">' + event.subject + '</span></div>' +
-                        '<div class="detail"><em>' + event.teacher + '</em></div>' +
-                        '<div class="detail"><strong>' + event.classroom + '</strong></div>' +
+                    // Récupérer les données de l'événement depuis l'attribut data-event de l'élément déplacé
+                    var eventData = JSON.parse(info.draggedEl.getAttribute('data-event'));
 
-                        '<div class="detail"><span class="event-time">De ' + event.start.format('HH:mm') + ' à ' + event.end.format('HH:mm') + '</span></div>' +
-                        '</div>'
-                    );
+                    // Récupérer les autres données nécessaires depuis l'événement FullCalendar
+                    var start = info.date;
+                    var startFormatted = start.toISOString().slice(0, 19).replace('T', ' ');
+                    var end = new Date(start.getTime() + 60 * 60 * 1000);
+                    var endFormatted = end.toISOString().slice(0, 19).replace('T', ' ');
+                    var color = eventData.color;
+                    var studentClass = selectedClass;
 
-                    // Appliquer des styles aux classes spécifiques
-                    element.find('.teacher-name').css('font-size', '18px');
-                    element.find('.event-details em').css('font-weight', 'bold');
-                    element.find('.event-details strong').css('font - style', 'italic');
-                    element.find('.event-time').css('font-weight', 'normal');
-
-                    // Set background color for the entire event
-                    element.css('background-color', event.color);
-                }
-                ,
-                eventResize: function (event, delta) {
-                    var start = $.fullCalendar.formatDate(event.start, 'Y-MM-DD HH:mm:ss');
-                    var end = $.fullCalendar.formatDate(event.end, 'Y-MM-DD HH:mm:ss');
-                    var title = event.title;
-                    var id = event.id;
-
-                    // Récupérer les valeurs des autres champs
-                    var teacher = event.teacher;
-                    var classe = selectedClass;
-                    var subject = event.subject;
-                    var classroom = event.classroom;
-                    var color = event.color;
-
+                    // Envoyer les données via AJAX
+                    var csrfToken = $('meta[name="csrf-token"]').attr('content');
                     $.ajax({
                         url: "/setups/schedule/action",
                         type: "POST",
-                        data: {
-                            title: title,
-                            start: start,
-                            end: end,
-                            id: id,
-                            teacher: teacher,
-                            class: classe,
-                            classroom: classroom,
-                            subject: subject,
-                            color: color,
-                            type: 'update'
-                            // Ajouter d'autres champs ici...
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken // Inclure le jeton CSRF dans les en-têtes de la requête
                         },
-                        success: function (response) {
-                            calendar.fullCalendar('refetchEvents');
-                            alert("Event Updated Successfully");
-                        }
-                    });
-                },
 
-                eventDrop: function (event, delta) {
-                    var start = $.fullCalendar.formatDate(event.start, 'Y-MM-DD HH:mm:ss');
-                    var end = $.fullCalendar.formatDate(event.end, 'Y-MM-DD HH:mm:ss');
-                    var title = event.title;
-                    var id = event.id;
-
-                    // Récupérer les valeurs des autres champs
-                    var teacher = event.teacher;
-                    var classe = selectedClass;
-                    var subject = event.subject
-                    var classe = event.class;
-                    var classroom = event.classroom;
-                    var color = event.color;
-
-                    $.ajax({
-                        url: "/setups/schedule/action",
-                        type: "POST",
                         data: {
-                            classroom: classroom,
-                            start: start,
-                            end: end,
-                            id: id,
-                            teacher: teacher,
-                            class: classe,
-                            classroom: classroom,
-                            subject: subject,
+                            _token: csrfToken,
+                            start: startFormatted,
+                            end: endFormatted,// Convertir la date en format ISO pour l'envoi
+                            teacher: eventData.teacher,
+                            class: studentClass, // Assurez-vous que le nom de la propriété correspond au nom utilisé dans le contrôleur
+                            classroom: eventData.classroom,
+                            subject: eventData.subject,
                             color: color,
-                            type: 'update'
-                            // Ajouter d'autres champs ici...
+                            type: 'add'
                         },
-                        success: function (response) {
-                            calendar.fullCalendar('refetchEvents');
-                            alert("Event Updated Successfully");
+                        success: function (data) {
+                            // Traiter la réponse en cas de succès
+                            calendar.refetchEvents();
+
+                            alert("Event Created Successfully");
                         },
                         error: function (xhr, status, error) {
-
-
+                            // Gérer les erreurs
                             try {
                                 var errorMessage = JSON.parse(xhr.responseText).error;
                                 alert("Error: " + errorMessage);
@@ -380,99 +453,40 @@
                         }
                     });
                 },
+                eventClick: function (info) {
+                    // Empêche le comportement par défaut du clic sur l'événement
+                    info.jsEvent.preventDefault();
 
-                eventClick: function (event) {
-                    if (confirm("Etes-vous sûre de vouloir supprimer?")) {
-                        var id = event.id;
-
-                        // Récupérer les valeurs des autres champs
+                    // Récupère l'URL de l'événement
+                    var eventUrl = info.event.url;
 
 
-                        $.ajax({
-                            url: "/setups/schedule/action",
-                            type: "POST",
-                            data: {
-                                id: id,
-
-                                type: "delete"
-                                // Ajouter d'autres champs ici...
-                            },
-                            success: function (response) {
-
-                                alert("Emploi du temps supprimé avec success");
-
-                            },
-                            error: function (xhr, status, error) {
-                                console.error(xhr.responseText);
-                                alert("Error deleting event. Please try again.");
-                            }
-                        });
-                    }
+                    // Ouvre un nouveau modal pour afficher l'URL de l'événement
+                    $('#modifyEventModal').modal('show');
+                    // Charge le contenu de l'URL dans le modal (vous pouvez utiliser Ajax ici si nécessaire)
+                    $('#modifyEventModal .modal-body').load(eventUrl);
                 }
+
+
+
+
+
+
+
+
             });
 
 
-            // Handle the Save Event button click
             $('#addEventBtn').on('click', function () {
-                // Ouvrir le modal d'ajout d'événement
                 $('#eventModal').modal('show');
             });
-            $('#saveEventBtn').on('click', function () {
 
-
-                var teacher = $('#teacherSelected').val();
-                var studentclass = selectedClass;
-                var subject = $('#subjectSelected').val();
-                var classroom = $('#classroomSelected').val();
-                var start = $('#startDateTime').val();
-                var end = $('#endDateTime').val();
-                function getRandomColor() {
-                    var letters = '0123456789ABCDEF';
-                    var color = '#';
-                    for (var i = 0; i < 6; i++) {
-                        color += letters[Math.floor(Math.random() * 16)];
-                    }
-                    return color;
-                }
-                var color = getRandomColor();
-
-                $.ajax({
-                    url: "/setups/schedule/action",
-                    type: "POST",
-                    data: {
-
-                        start: start,
-                        end: end,
-                        teacher: teacher,
-                        class: studentclass,
-                        classroom: classroom,
-                        subject: subject,
-                        color: color,
-                        type: 'add'
-                    },
-                    success: function (data) {
-                        $('#eventModal').modal('hide');
-                        calendar.fullCalendar('refetchEvents');
-                        alert("Event Created Successfully");
-                    },
-                    error: function (xhr, status, error) {
-
-
-                        try {
-                            var errorMessage = JSON.parse(xhr.responseText).error;
-                            alert("Error: " + errorMessage);
-                        } catch (e) {
-                            alert("Error saving event. Please try again.");
-                        }
-                    }
-                });
-            });
-
-
+            calendar.render();
         });
 
-
     </script>
+
+
 
 
 

@@ -25,6 +25,8 @@
                                 <div class="form-group">
                                     <label for="subject_id">Matière :</label>
                                     <select name="subject_id" id="subject_id" class="form-control">
+                                        <option value="" selected="" disabled="">Selectionnez une matière
+                                        </option>
                                         @foreach($subjects as $subject)
                                         <option value="{{ $subject->id }}">{{ $subject->name }}</option>
                                         @endforeach
@@ -34,6 +36,8 @@
                                 <div class="form-group">
                                     <label for="teacher_id">Enseignant :</label>
                                     <select name="teacher_id" id="teacher_id" class="form-control">
+                                        <option value="" selected="" disabled="">Selectionnez un enseignant
+                                        </option>
                                         @foreach($teachers as $teacher)
                                         <option value="{{ $teacher->id }}">{{ $teacher->name }}</option>
                                         @endforeach
@@ -43,6 +47,8 @@
                                 <div class="form-group">
                                     <label for="class_id">Classe :</label>
                                     <select name="class_id" id="class_id" class="form-control">
+                                        <option value="" selected="" disabled="">Selectionnez une classe
+                                        </option>
                                         @foreach($classes as $class)
                                         <option value="{{ $class->id }}">{{ $class->name }}</option>
                                         @endforeach
@@ -52,6 +58,8 @@
                                 <div class="form-group">
                                     <label for="classroom_id">Salle de classe :</label>
                                     <select name="classroom_id" id="classroom_id" class="form-control">
+                                        <option value="" selected="" disabled="">Selectionnez une salle
+                                        </option>
                                         @foreach($classrooms as $classroom)
                                         <option value="{{ $classroom->id }}">{{ $classroom->name }}</option>
                                         @endforeach

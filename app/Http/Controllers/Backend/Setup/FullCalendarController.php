@@ -21,9 +21,10 @@ class FullCalendarController extends Controller
 
     public function getSubjectsByTeacher(Request $request)
     {
+        // Récupérer l'identifiant de l'enseignant depuis la requête
         $teacherId = $request->input('teacherSelected');
 
-        // Récupérer les chaînes JSON des identifiants de matières
+        // Récupérer les identifiants de matières associés à l'enseignant
         $subjectIdsJson = AssignTeacher::where('teacher_id', $teacherId)->pluck('subject_id');
 
         // Convertir les chaînes JSON en tableaux
@@ -31,13 +32,11 @@ class FullCalendarController extends Controller
             return json_decode($item);
         })->flatten()->unique()->toArray();
 
+        // Récupérer les noms et les identifiants des matières correspondant aux identifiants
+        $subjects = SchoolSubject::whereIn('id', $subjectIds)->get(['id', 'name']);
 
-
-        // Récupérez les noms des matières correspondant aux identifiants
-        $subjectNames = SchoolSubject::whereIn('id', $subjectIds)->pluck('name');
-        // Log::info('Teacher subj: ' . $subjectNames);
-
-        return response()->json($subjectNames);
+        // Retourner les noms et les identifiants des matières en tant que réponse JSON
+        return response()->json($subjects);
     }
 
     public function getClass()
@@ -51,6 +50,7 @@ class FullCalendarController extends Controller
     public function index(Request $request, $classId)
     {
         $data['selectedClass'] = StudentClass::where('id', $classId)->value('name');
+        $data['selectedClassId'] = $classId;
 
 
         $data['classes'] = StudentClass::all();
@@ -60,12 +60,24 @@ class FullCalendarController extends Controller
 
         // Récupérez les événements pour la classe spécifique
         $data['schedules'] = Calendar_schedule::where('class', $data['selectedClass'])->get();
+        $selectedClassName = StudentClass::where('id', $classId)->value('name');
 
         if ($request->ajax()) {
-            $schedules = Calendar_schedule::whereDate('start', '>=', $request->start)
+            $schedules = Calendar_schedule::where('class', $selectedClassName)
+                ->whereDate('start', '>=', $request->start)
                 ->whereDate('end', '<=', $request->end)
-                ->get(['id', 'class', 'teacher', 'classroom', 'subject', 'start', 'end', 'color']);
-
+                ->get(['id', 'class', 'teacher', 'classroom', 'subject', 'start', 'end', 'color'])
+                ->map(function ($schedule) {
+                    return [
+                        'id' => $schedule->id,
+                        'title' => $schedule->subject,
+                        'start' => $schedule->start,
+                        'end' => $schedule->end,
+                        'teacher' => $schedule->teacher,
+                        'classroom' => $schedule->classroom,
+                        'color' => $schedule->color,
+                    ];
+                });
             return response()->json($schedules);
         }
 

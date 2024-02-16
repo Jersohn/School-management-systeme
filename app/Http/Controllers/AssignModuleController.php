@@ -78,7 +78,7 @@ class AssignModuleController extends Controller
         $module->save();
 
         // Redirigez l'utilisateur vers une autre page ou affichez un message de succès
-        return redirect()->route('module.show')->with([
+        return redirect()->back()->with([
             'message' => 'Module ajouté avec succès',
             'alert-type' => 'success'
         ]);
