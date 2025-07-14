@@ -31,14 +31,14 @@ services:
       - ./database.sql:/docker-entrypoint-initdb.d/init.sql
 
   webserver:
-    image: nginx:alpine
-    ports:
-      - "8000:80"
-    volumes:
-      - ./:/var/www
-      - ./docker/nginx:/etc/nginx/conf.d
-    depends_on:
-      - app
+  image: nginx:alpine
+  ports:
+    - "80:80"
+  volumes:
+    - ./:/var/www
+    - ./docker/nginx:/etc/nginx/conf.d
+  depends_on:
+    - app
 
 volumes:
   mysql_data:
