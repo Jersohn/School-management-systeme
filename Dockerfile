@@ -1,39 +1,40 @@
 FROM php:7.4-fpm
 
-# Arguments defined in docker-compose.yml
-ARG user
-ARG uid
-
-RUN curl -fsSLO https://get.docker.com/builds/Linux/x86_64/docker-17.04.0-ce.tgz \
-  && tar xzvf docker-17.04.0-ce.tgz \
-  && mv docker/docker /usr/local/bin \
-  && rm -r docker docker-17.04.0-ce.tgz
-  
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
-    curl \
+    unzip \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
-    zip \
-    unzip
-
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+    libzip-dev
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Get latest Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Create system user to run Composer and Artisan Commands
-RUN useradd -G www-data,root -u $uid -d /home/$user $user
-RUN mkdir -p /home/$user/.composer && \
-    chown -R $user:$user /home/$user
+# Configure Git safe directory
+RUN git config --global --add safe.directory /var/www
+
+# Create www-data user with specific UID/GID (correspondant à l'hôte)
+RUN groupmod -g 1000 www-data && \
+    usermod -u 1000 www-data
 
 # Set working directory
 WORKDIR /var/www
 
-USER $user
+# Copy application files (en préservant les permissions)
+COPY --chown=www-data:www-data . .
+
+# Install PHP dependencies
+RUN composer install --optimize-autoloader --no-dev --ignore-platform-reqs
+
+# Set permissions
+RUN chmod -R 775 storage bootstrap/cache
+
+# Cleanup
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+CMD ["php-fpm"]
