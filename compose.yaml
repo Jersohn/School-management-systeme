@@ -1,43 +1,52 @@
 
-
 services:
   app:
     build:
-      context: .
+      args:
+        user: jers
+        uid: 1000
+      context: ./
       dockerfile: Dockerfile
+    image: laravel8
+    container_name: laravel8-app
+    restart: unless-stopped
+    working_dir: /var/www/
     volumes:
       - ./:/var/www
-    container_name: app
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-      - DB_HOST=db
-      - DB_DATABASE=school_management
-      - DB_USERNAME=root
-      - DB_PASSWORD=
-    depends_on:
-      - db
+    networks:
+      - sms
 
   db:
-    image: mysql:8.0
+    image: mysql:5.7
+    container_name: sms-db
+    restart: unless-stopped
+    tty: true
     ports:
       - "3306:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=
-      - MYSQL_DATABASE=school_management
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./database.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./docker-compose/mysql:/docker-entrypoint-initdb.d
+    networks:
+      - sms
 
-  webserver:
+  nginx:
     image: nginx:alpine
+    container_name: sms-nginx
+    restart: unless-stopped
     ports:
-      - "8000:80"
+      - 8000:80
     volumes:
       - ./:/var/www
-      - ./docker/nginx:/etc/nginx/conf.d
-    depends_on:
-      - app
+      - ./docker-compose/nginx:/etc/nginx/conf.d/
+    networks:
+      - sms
 
-volumes:
-  mysql_data:
+networks:
+  sms:
+    driver: bridge
