@@ -5,8 +5,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        - GITHUB_REPO=Jersohn/School-management-systeme
     volumes:
       - ./:/var/www
     container_name: app
@@ -32,12 +30,9 @@ services:
       - ./database.sql:/docker-entrypoint-initdb.d/init.sql
 
   webserver:
-    build:
-      context: ./web
-    image: webserver
-    container_name: webserver
+    image: nginx:alpine
     ports:
-      - "80:80"
+      - "8000:80"
     volumes:
       - ./:/var/www
       - ./docker/nginx:/etc/nginx/conf.d
